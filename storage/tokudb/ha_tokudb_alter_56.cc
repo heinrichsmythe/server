@@ -484,7 +484,7 @@ enum_alter_inplace_result ha_tokudb::check_if_supported_inplace_alter(
     } else if ((ctx->handler_flags & ALTER_STORED_COLUMN_TYPE) &&
                 only_flags(
                     ctx->handler_flags,
-                    ALTER_STORED_COLUMN_TYPE | ALTER_COLUMN_EQUAL_PACK_LENGTH |
+                    ALTER_STORED_COLUMN_TYPE |
                     ALTER_COLUMN_DEFAULT) &&
                 table->s->fields == altered_table->s->fields &&
                 find_changed_fields(

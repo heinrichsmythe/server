@@ -238,9 +238,7 @@ rw_lock_create_func(
 	lock->is_block_lock = 0;
 
 	mutex_enter(&rw_lock_list_mutex);
-
 	UT_LIST_ADD_FIRST(rw_lock_list, lock);
-
 	mutex_exit(&rw_lock_list_mutex);
 }
 

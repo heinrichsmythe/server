@@ -633,7 +633,6 @@ struct rw_lock_t
 	/** Level in the global latching order. */
 	latch_level_t	level;
 #endif /* UNIV_DEBUG */
-
 };
 #ifdef UNIV_DEBUG
 /** The structure for storing debug info of an rw-lock.  All access to this
