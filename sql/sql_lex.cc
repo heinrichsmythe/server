@@ -9282,6 +9282,16 @@ SELECT_LEX_UNIT *LEX::parsed_body_select(SELECT_LEX *sel,
     return NULL;
 
   SELECT_LEX_UNIT *res= create_unit(sel);
+  if (res && sel->tvc && sel->order_list.elements)
+  {
+    if (res->add_fake_select_lex(thd))
+      return NULL;
+    SELECT_LEX *fake= res->fake_select_lex;
+    fake->order_list= sel->order_list;
+    fake->explicit_limit= sel->explicit_limit;
+    fake->select_limit= sel->select_limit;
+    fake->offset_limit= sel->offset_limit;
+  }
   return res;
 }
 
