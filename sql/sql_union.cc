@@ -982,7 +982,24 @@ bool st_select_lex_unit::prepare(TABLE_LIST *derived_arg,
     types= first_sl->item_list;
     goto cont;
   }
- 
+
+  if (sl->tvc && sl->order_list.elements &&
+      !sl->tvc->to_be_wrapped_as_with_tail())
+  {
+    if (thd->lex->context_analysis_only & CONTEXT_ANALYSIS_ONLY_VIEW)
+    {
+      sl->master_unit()->fake_select_lex= 0;
+      sl->master_unit()->saved_fake_select_lex= 0;
+    }
+    else
+    {
+      sl->order_list.empty();
+      sl->explicit_limit= 0;
+      sl->select_limit= 0;
+      sl->offset_limit= 0;
+    }
+  }
+
   for (;sl; sl= sl->next_select(), union_part_count++)
   {
     if (sl->tvc)
