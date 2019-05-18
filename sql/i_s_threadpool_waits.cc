@@ -13,7 +13,6 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02111 - 1301 USA*/
 
-#include <threadpool_generic.h>
 #include <mysql_version.h>
 #include <mysql/plugin.h>
 
@@ -27,7 +26,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02111 - 1301 USA*/
 
 static ST_FIELD_INFO fields_info[] =
 {
-  {"REASON", 6, MYSQL_TYPE_STRING, 0, 0, 0, 0},
+  {"REASON", 15, MYSQL_TYPE_STRING, 0, 0, 0, 0},
   {"COUNT",19,MYSQL_TYPE_LONGLONG,0,0, 0,0},
   {0, 0, MYSQL_TYPE_STRING, 0, 0, 0, 0}
 };
@@ -53,14 +52,13 @@ extern std::atomic_uint64_t tp_waits[THD_WAIT_LAST];
 
 static int fill_table(THD* thd, TABLE_LIST* tables, COND*)
 {
-  if (!all_groups)
-    return 0;
-
   TABLE* table = tables->table;
   for (auto i=0; i < THD_WAIT_LAST; i++)
   {
     table->field[0]->store(wait_reasons[i].str, wait_reasons[i].length, system_charset_info);
     table->field[1]->store(tp_waits[i], true);
+    if (schema_table_store_record(thd, table))
+      return 1;
   }
   return 0;
 }
