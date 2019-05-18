@@ -1026,11 +1026,11 @@ struct ha_innobase_inplace_ctx : public inplace_alter_handler_ctx
 				rw_lock_free(&index->lock);
 				dict_mem_index_free(index);
 			}
-			if (instant_table->fts) {
-				fts_free(instant_table);
-			}
 			for (unsigned i = old_n_v_cols; i--; ) {
 				UT_DELETE(old_v_cols[i].v_indexes);
+			}
+			if (instant_table->fts) {
+				fts_free(instant_table);
 			}
 			dict_mem_table_free(instant_table);
 		}
@@ -1097,23 +1097,6 @@ struct ha_innobase_inplace_ctx : public inplace_alter_handler_ctx
 		return instant_table;
 	}
 
-	/** Share context between partitions.
-	@param[in] ctx	context from another partition of the table */
-	void set_shared_data(const inplace_alter_handler_ctx& ctx)
-	{
-		if (add_autoinc != ULINT_UNDEFINED) {
-			const ha_innobase_inplace_ctx& ha_ctx =
-				static_cast<const ha_innobase_inplace_ctx&>
-				(ctx);
-			/* When adding an AUTO_INCREMENT column to a
-			partitioned InnoDB table, we must share the
-			sequence for all partitions. */
-			ut_ad(ha_ctx.add_autoinc == add_autoinc);
-			ut_ad(ha_ctx.sequence.last());
-			sequence = ha_ctx.sequence;
-		}
-	}
-
 	/** Create an index table where indexes are ordered as follows:
 
 	IF a new primary key is defined for the table THEN
@@ -1147,6 +1130,23 @@ struct ha_innobase_inplace_ctx : public inplace_alter_handler_ctx
 				index for FTS index */
 		const TABLE*			table);
 				/*!< in: MySQL table that is being altered */
+
+	/** Share context between partitions.
+	@param[in] ctx	context from another partition of the table */
+	void set_shared_data(const inplace_alter_handler_ctx& ctx)
+	{
+		if (add_autoinc != ULINT_UNDEFINED) {
+			const ha_innobase_inplace_ctx& ha_ctx =
+				static_cast<const ha_innobase_inplace_ctx&>
+				(ctx);
+			/* When adding an AUTO_INCREMENT column to a
+			partitioned InnoDB table, we must share the
+			sequence for all partitions. */
+			ut_ad(ha_ctx.add_autoinc == add_autoinc);
+			ut_ad(ha_ctx.sequence.last());
+			sequence = ha_ctx.sequence;
+		}
+	}
 
 private:
 	// Disable copying
@@ -8276,6 +8276,8 @@ ha_innobase::inplace_alter_table(
 	DBUG_ENTER("inplace_alter_table");
 	DBUG_ASSERT(!srv_read_only_mode);
 	ut_ad(!sync_check_iterate(sync_check()));
+	ut_ad(!rw_lock_own_flagged(&dict_sys.latch,
+				   RW_LOCK_FLAG_X | RW_LOCK_FLAG_S));
 
 	DEBUG_SYNC(m_user_thd, "innodb_inplace_alter_table_enter");
 

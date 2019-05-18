@@ -2869,7 +2869,8 @@ i_s_fts_deleted_generic_fill(
 
 	RETURN_IF_INNODB_NOT_STARTED(tables->schema_table_name.str);
 
-	/* Prevent DDL to drop fts aux tables. */
+	/* Prevent DROP of the internal tables for fulltext indexes.
+	FIXME: acquire DDL-blocking MDL on the user table name! */
 	rw_lock_s_lock(&dict_sys.latch);
 
 	user_table = dict_table_open_on_id(
@@ -2877,13 +2878,10 @@ i_s_fts_deleted_generic_fill(
 
 	if (!user_table) {
 		rw_lock_s_unlock(&dict_sys.latch);
-
 		DBUG_RETURN(0);
 	} else if (!dict_table_has_fts_index(user_table)) {
 		dict_table_close(user_table, FALSE, FALSE);
-
 		rw_lock_s_unlock(&dict_sys.latch);
-
 		DBUG_RETURN(0);
 	}
 
@@ -3728,7 +3726,8 @@ i_s_fts_index_table_fill(
 
 	RETURN_IF_INNODB_NOT_STARTED(tables->schema_table_name.str);
 
-	/* Prevent DDL to drop fts aux tables. */
+	/* Prevent DROP of the internal tables for fulltext indexes.
+	FIXME: acquire DDL-blocking MDL on the user table name! */
 	rw_lock_s_lock(&dict_sys.latch);
 
 	user_table = dict_table_open_on_id(
@@ -3736,7 +3735,6 @@ i_s_fts_index_table_fill(
 
 	if (!user_table) {
 		rw_lock_s_unlock(&dict_sys.latch);
-
 		DBUG_RETURN(0);
 	}
 
@@ -3891,7 +3889,8 @@ i_s_fts_config_fill(
 
 	RETURN_IF_INNODB_NOT_STARTED(tables->schema_table_name.str);
 
-	/* Prevent DDL to drop fts aux tables. */
+	/* Prevent DROP of the internal tables for fulltext indexes.
+	FIXME: acquire DDL-blocking MDL on the user table name! */
 	rw_lock_s_lock(&dict_sys.latch);
 
 	user_table = dict_table_open_on_id(
@@ -3964,6 +3963,8 @@ no_fts:
 	dict_table_close(user_table, FALSE, FALSE);
 
 	rw_lock_s_unlock(&dict_sys.latch);
+
+	trx_free(trx);
 
 	DBUG_RETURN(ret);
 }
